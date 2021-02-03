@@ -39,6 +39,7 @@ import {
 } from "core/utils/url"
 
 import win from "core/window"
+import { afterAll, beforeAll, expect, jest } from "@jest/globals"
 
 describe("utils", () => {
 
@@ -1389,6 +1390,17 @@ describe("utils", () => {
   })
 
   describe("buildUrl", () => {
+    const { location } = window
+    beforeAll(() => {
+      delete window.location
+      window.location = {
+        href: "http://localhost/",
+      }
+    })
+    afterAll(() => {
+      window.location = location
+    })
+
     const specUrl = "https://petstore.swagger.io/v2/swagger.json"
 
     const noUrl = ""
@@ -1400,6 +1412,9 @@ describe("utils", () => {
     const absoluteServerUrl = "https://server-example.com/base-path/path"
     const serverUrlRelativeToBase = "server-example/base-path/path"
     const serverUrlRelativeToHost = "/server-example/base-path/path"
+
+    const specUrlAsInvalidUrl = "./examples/test.yaml"
+    const specUrlOas2NonUrlString = "an allowed OAS2 TermsOfService description string"
 
     it("build no url", () => {
       expect(buildUrl(noUrl, specUrl, { selectedServer: absoluteServerUrl })).toBe(undefined)
@@ -1431,6 +1446,14 @@ describe("utils", () => {
     it("build relative url with server url relative to host", () => {
       expect(buildUrl(urlRelativeToBase, specUrl, { selectedServer: serverUrlRelativeToHost })).toBe("https://petstore.swagger.io/server-example/base-path/relative-url/base-path/path")
       expect(buildUrl(urlRelativeToHost, specUrl, { selectedServer: serverUrlRelativeToHost })).toBe("https://petstore.swagger.io/relative-url/base-path/path")
+    })
+
+    it("build relative url when no servers defined AND specUrl is invalid Url", () => {
+      expect(buildUrl(urlRelativeToHost, specUrlAsInvalidUrl, { selectedServer: noServerSelected })).toBe("http://localhost/relative-url/base-path/path")
+    })
+
+    it("build relative url when no servers defined AND specUrl is OAS2 non-url string", () => {
+      expect(buildUrl(urlRelativeToHost, specUrlOas2NonUrlString, { selectedServer: noServerSelected })).toBe("http://localhost/relative-url/base-path/path")
     })
   })
 
@@ -1557,6 +1580,58 @@ describe("utils", () => {
       // Then
       const actual = JSON.parse(res)
       expect(actual.test).toEqual(123)
+    })
+
+    it("should handle number example with string schema as string", () => {
+      // Given
+      const expected = 123
+      const res = getSampleSchema({
+        type: "string",
+      }, "text/json", {}, expected)
+
+      // Then
+      const actual = JSON.parse(res)
+      expect(actual).toEqual("123")
+    })
+
+    it("should handle number literal example with string schema as string", () => {
+      // Given
+      const expected = "123"
+      const res = getSampleSchema({
+        type: "string",
+      }, "text/json", {}, expected)
+
+      // Then
+      const actual = JSON.parse(res)
+      expect(actual).toEqual("123")
+    })
+
+    it("should handle number literal example with number schema as number", () => {
+      // Given
+      const expected = "123"
+      const res = getSampleSchema({
+        type: "number",
+      }, "text/json", {}, expected)
+
+      // Then
+      const actual = JSON.parse(res)
+      expect(actual).toEqual(123)
+    })
+
+    it("should return yaml example if yaml is contained in the content-type", () => {
+      const res = getSampleSchema({
+        type: "object",
+      }, "text/yaml", {}, {test: 123})
+
+      expect(res).toEqual("test: 123")
+    })
+
+    it("should return yaml example if yml is contained in the content-type", () => {
+      const res = getSampleSchema({
+        type: "object",
+      }, "text/yml", {}, {test: 123})
+
+      expect(res).toEqual("test: 123")
     })
   })
 
