@@ -71,6 +71,7 @@ export class JsonSchema_string extends Component {
   render() {
     let { getComponent, value, schema, errors, required, description, disabled } = this.props
     const enumValue = schema && schema.get ? schema.get("enum") : null
+    const xEnum = schema && schema.get ? schema.get("x-enum") : null
     const format = schema && schema.get ? schema.get("format") : null
     const type = schema && schema.get ? schema.get("type") : null
     const schemaIn = schema && schema.get ? schema.get("in") : null
@@ -83,7 +84,7 @@ export class JsonSchema_string extends Component {
       const Select = getComponent("Select")
       return (<Select className={ errors.length ? "invalid" : ""}
                       title={ errors.length ? errors : ""}
-                      allowedValues={ enumValue }
+                      allowedValues={ xEnum || enumValue }
                       value={ value }
                       allowEmptyValue={ !required }
                       disabled={disabled}

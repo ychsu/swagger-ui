@@ -188,6 +188,14 @@ export class Select extends React.Component {
     }
   }
 
+  getItemValue(item) {
+    return typeof item === 'string' ? item : null;
+  }
+
+  getItemText(item) {
+    return " " + (typeof item === 'string' ? item : item._list._tail.array.map(i => i[1]).join());
+  }
+
   render(){
     let { allowedValues, multiple, allowEmptyValue, disabled } = this.props
     let value = this.state.value?.toJS?.() || this.state.value
@@ -196,8 +204,8 @@ export class Select extends React.Component {
       <select className={this.props.className} multiple={ multiple } value={value} onChange={ this.onChange } disabled={disabled} >
         { allowEmptyValue ? <option value="">--</option> : null }
         {
-          allowedValues.map(function (item, key) {
-            return <option key={ key } value={ String(item) }>{ String(item) }</option>
+          allowedValues.map((item, key) => {
+            return <option key={ key } value={ this.getItemValue(item) || key }>{ key + this.getItemText(item) }</option>
           })
         }
       </select>
